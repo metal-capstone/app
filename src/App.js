@@ -10,7 +10,7 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://0.0.0.0:8000/hello-world");
+        const response = await fetch("http://localhost:8000/hello-world");
         const json = await response.json();
         setData(json);
       } catch (error) {
