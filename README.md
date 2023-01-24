@@ -1,4 +1,14 @@
-# Getting Started with Create React App
+# spotify chatbot app
+
+## Create container
+
+docker build . -t spotify-chatbot-app
+
+## Run container
+
+docker run -p 3000:3000 -d spotify-chatbot-app
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
