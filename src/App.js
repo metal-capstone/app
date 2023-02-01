@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 
 import './App.css';
-//import credentials from '../../credentials';
 
 function App() {
   const [data, setData] = useState({message: "no data"});
