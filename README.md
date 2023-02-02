@@ -1,12 +1,14 @@
 # spotify chatbot app
 
 ## Create container
-
+```
 docker build . -t spotify-chatbot-app
+```
 
 ## Run container
-
+```
 docker run -p 3000:3000 -d spotify-chatbot-app
+```
 
 ## Debug React App
 1. Open the app folder in VSCode.
