@@ -21,7 +21,7 @@ function App() {
 
   return (
     <div className="App">
-      <p>Test</p>
+      <h1>Spotify Chatbot</h1>
     </div>
   );
 }
