@@ -12,7 +12,7 @@ function Dashboard() {
         axios.get('http://localhost:8000/user-info')
         .then(function (response) {
           setUsername(response.data.username);
-          setProfilePic(response.data.profile_pic[0].url);
+          setProfilePic(response.data.profile_pic);
         })
         .catch(function (error) {
           console.log(error);
@@ -23,7 +23,7 @@ function Dashboard() {
     const logTopSongs = () => {
         axios.get('http://localhost:8000/user-top-songs')
           .then(function (response) {
-            console.log(response.data.songs.items)
+            console.log(response.data.songs)
           })
           .catch(function (error) {
             console.log(error);
