@@ -3,14 +3,14 @@
 FROM node:16-alpine
 # Set the working directory
 WORKDIR /app
-# Copy app dependencies to container
-COPY ./package.json /app
-COPY ./package-lock.json /app
-# Install packages, will take a while because of React
-RUN npm install
-# Copy rest of app over
-COPY . /app
-
+# Copy app files
+COPY . .
+# ==== BUILD =====
+# Install dependencies (npm ci makes sure the exact versions in the lockfile gets installed)
+RUN npm ci 
+# Build the app
+RUN npm run build
+# ==== RUN =======
 EXPOSE 3000
-# start dev server
-CMD npm start
+# Start the app
+CMD [ "npm", "run", "start" ]
