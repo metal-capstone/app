@@ -14,7 +14,6 @@ function Dashboard() {
 
   const { sendMessage, lastMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
-      console.log('WebSocket connection established.');
       axios.get('http://localhost:8000/user-info')
       .then(function (response) {
         setUsername(response.data.username);
@@ -34,7 +33,6 @@ function Dashboard() {
 
 
   const handleSend = () => {
-    console.log(currentMessage);
     sendMessage(currentMessage);
     setCurrentMessage('');
   }
