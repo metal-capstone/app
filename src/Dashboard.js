@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import useWebSocket from 'react-use-websocket';
 import axios from 'axios';
 
+import Header from './Header';
+
 import './Dashboard.css';
 
 function Dashboard() {
@@ -25,23 +27,10 @@ function Dashboard() {
           console.log(error);
         });
     }, []);
-
-    // this is just an example function with a button to show how to query the backend
-    const logTopSongs = () => {
-        axios.get('http://localhost:8000/user-top-songs')
-          .then(function (response) {
-            console.log(response.data.songs)
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-      }
   
     return (
       <div className="Dashboard">
-        <h1>{username}</h1>
-        <img src={profilePic} alt="profile" />
-        <button onClick={logTopSongs}>Log top songs</button>
+        <Header username={username} profilePic={profilePic} />
       </div>
     );
   }

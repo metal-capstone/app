@@ -1,6 +1,8 @@
 import React from "react";
 import axios from 'axios';
 
+import Header from "./Header";
+
 import './Login.css';
 
 function Login() {
@@ -17,7 +19,7 @@ function Login() {
   
     return (
       <div className="Login">
-        <h1>Spotify Chatbot</h1>
+        <Header />
         <p>A chatbot that can predict what songs the user wants to listen to based on their location as well as both explicit input + analysis of users mood</p>
         <button onClick={spotifyLogin}>Login with Spotify</button>
       </div>

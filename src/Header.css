@@ -1,0 +1,31 @@
+.Header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: rgb(44, 43, 42);
+    color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+.ProfilePic {
+    display: inline;
+    margin: 0 auto;
+    width: 100%;
+    height: auto;
+}
+
+.ProfilePicCropper {
+    width: 50px;
+    height: 50px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.UserCard {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
