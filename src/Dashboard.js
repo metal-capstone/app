@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import axios from 'axios';
 
 import Header from './Header';
 import './Dashboard.css';
@@ -10,55 +9,74 @@ function Dashboard() {
   const [username, setUsername] = useState();
   const [profilePic, setProfilePic] = useState();
   const [currentMessage, setCurrentMessage] = useState('');
-  const [messageHistory, setMessageHistory] = useState([]);
+  const [messageHistory, setMessageHistory] = useState([['App', 'Started']]);
+  let messagesEnd;
 
-  const { sendMessage, lastMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
+  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
-      console.log('Connected');
+      setMessageHistory((prev) => [...prev, ['App', 'Connected to ' + socketUrl]]);
+      scrollToBottom();
     }
   });
 
+  // called when last json message changes, so anytime the backend sends a message.
   useEffect(() => {
     if (lastJsonMessage !== null) {
-      if (lastJsonMessage.type == 'message') {
-        setMessageHistory((prev) => prev.concat(lastJsonMessage.message)); 
-      } else if (lastJsonMessage.type == 'user-info') {
+      if (lastJsonMessage.type == 'message') { // if message type json, add to message history
+        setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
+        scrollToBottom();
+      } else if (lastJsonMessage.type == 'user-info') { // if user info type, update state user info
         setUsername(lastJsonMessage.username);
         setProfilePic(lastJsonMessage.profile_pic);
       }
     }
   }, [lastJsonMessage]);
 
-  // dont send empty messages, after sending clear current
+  // prevents empty messages from being sent, after sending clear current message
   const handleSend = () => {
     if (currentMessage !== '') {
       sendMessage(currentMessage);
+      setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
+      scrollToBottom();
       setCurrentMessage('');
     }
   }
 
+  // strings for ready state statuses
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
+    [ReadyState.OPEN]: 'Connected (Open)',
     [ReadyState.CLOSING]: 'Closing',
     [ReadyState.CLOSED]: 'Closed',
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
   }[readyState];
 
+  // function to send message when enter is pressed when focused on the input box
+  const enterPress = (event) => {
+    if (event.keyCode === 13) {
+      handleSend();
+    }
+  }
+
+  // TODO: doesnt acutally scroll all the way
+  const scrollToBottom = () => {
+    messagesEnd.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <div className="Dashboard">
       <Header username={username} profilePic={profilePic} />
-      <p>Connection Status:{connectionStatus}</p>
-      <label>
-        Message:
-        <input type="text" value={currentMessage} onChange={message => { setCurrentMessage(message.target.value) }} />
-      </label>
-      <button onClick={handleSend}>Send</button>
-      <ul>
+      <div className="MessageHistory">
         {messageHistory.map((message, idx) => (
-          <span key={idx}>{message ? message : null}</span>
+          <div className="Message" key={idx}><div className="MessageUser">{message[0]}</div><div className="MessageText">{message[1] ? message[1] : null}</div></div>
         ))}
-      </ul>
+        <div ref={(el) => { messagesEnd = el; }}></div>
+      </div>
+      <div className="MessageBox">
+        <div className="MessageLabel">Message:</div><input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
+        <button onClick={handleSend}>Send</button>
+      </div>
+      <div className="StatusBar">Connection Status: {connectionStatus}</div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ function Header(props) {
     // TODO: Fix prof pic css to look good for width>height images
     return (
         <div className="Header">
-            <h1>Spotify Chatbot</h1>
+            <a href="/"><h1>Spotify Chatbot</h1></a>
             <div className='UserCard'>
                 <p>{props.username || 'No User'}</p>
                 <div className="ProfilePicCropper">

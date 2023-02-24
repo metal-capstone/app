@@ -1,4 +1,54 @@
 .Dashboard {
-    text-align: center;
-  }
-  
+  overflow: hidden;
+  height: 100vh;
+}
+
+.MessageHistory {
+  height: 50vh;
+  overflow-y: auto;
+}
+
+.Message {
+  display: flex;
+  flex-direction: row;
+  border-top: 1px solid rgb(184, 184, 184);
+  box-shadow: 0px 1px 1px gray;
+}
+
+.MessageUser {
+  width: 15vh;
+  padding: 3px 0px;
+  border-right: 1px solid rgb(184, 184, 184);
+  box-shadow: 1px 0px 1px gray;
+  text-align: center;
+  background-color: lightgray;
+}
+
+.MessageText {
+  padding-left: 5px;
+}
+
+.MessageBox {
+  display: flex;
+  flex-direction: row;
+  padding: 3px;
+  height: 6vh;
+  width: 100%;
+  box-shadow: 0px 0px 4px rgb(93, 93, 93);
+}
+
+.MessageBox input {
+  width: 40%;
+  margin-right: 3px;
+}
+
+.StatusBar {
+  padding: 2px;
+  background-color: white;
+}
+
+.MessageLabel {
+  width: 15vh;
+  padding: 3px 0px;
+  text-align: center;
+}
