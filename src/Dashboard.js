@@ -1,18 +1,21 @@
 import React, { useEffect, useState, useCallback } from "react";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { useCookies } from 'react-cookie';
 
 import Header from './Header';
 import './Dashboard.css';
-const socketUrl = 'ws://localhost:8000/ws';
+const socketUrl = 'ws://localhost:8000/';
 
 function Dashboard() {
+  const [cookies, setCookies] = useCookies(['user']);
   const [username, setUsername] = useState();
   const [profilePic, setProfilePic] = useState();
   const [currentMessage, setCurrentMessage] = useState('');
   const [messageHistory, setMessageHistory] = useState([['App', 'Started']]);
   let messagesEnd;
+  const userUrl = socketUrl + cookies.state + '/ws';
 
-  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
+  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(userUrl, {
     onOpen: () => {
       setMessageHistory((prev) => [...prev, ['App', 'Connected to ' + socketUrl]]);
     }

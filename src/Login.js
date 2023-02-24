@@ -1,15 +1,19 @@
 import React from "react";
 import axios from 'axios';
+import { useCookies } from 'react-cookie';
 
 import Header from "./Header";
 
 import './Login.css';
 
 function Login() {
+  const [cookie, setCookies] = useCookies(['user']);
+
     // button function that gets the auth url from backend and redirect to it
     const spotifyLogin = () => {
       axios.get('http://localhost:8000/spotify-login')
         .then(function (response) {
+          setCookies('state', response.data.state);
           window.location.href = response.data.auth_url;
         })
         .catch(function (error) {
