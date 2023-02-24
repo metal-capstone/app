@@ -15,7 +15,6 @@ function Dashboard() {
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
       setMessageHistory((prev) => [...prev, ['App', 'Connected to ' + socketUrl]]);
-      scrollToBottom();
     }
   });
 
@@ -24,7 +23,6 @@ function Dashboard() {
     if (lastJsonMessage !== null) {
       if (lastJsonMessage.type == 'message') { // if message type json, add to message history
         setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
-        scrollToBottom();
       } else if (lastJsonMessage.type == 'user-info') { // if user info type, update state user info
         setUsername(lastJsonMessage.username);
         setProfilePic(lastJsonMessage.profile_pic);
@@ -32,12 +30,16 @@ function Dashboard() {
     }
   }, [lastJsonMessage]);
 
+  // scroll to messages end whenever a new message is added
+  useEffect(() => {
+    messagesEnd.scrollIntoView({ behavior: "smooth" });
+  }, [messageHistory]);
+
   // prevents empty messages from being sent, after sending clear current message
   const handleSend = () => {
     if (currentMessage !== '') {
       sendMessage(currentMessage);
       setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
-      scrollToBottom();
       setCurrentMessage('');
     }
   }
@@ -56,11 +58,6 @@ function Dashboard() {
     if (event.keyCode === 13) {
       handleSend();
     }
-  }
-
-  // TODO: doesnt acutally scroll all the way
-  const scrollToBottom = () => {
-    messagesEnd.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
