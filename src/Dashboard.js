@@ -14,27 +14,27 @@ function Dashboard() {
 
   const { sendMessage, lastMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
-      axios.get('http://localhost:8000/user-info')
-      .then(function (response) {
-        setUsername(response.data.username);
-        setProfilePic(response.data.profile_pic);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+      console.log('Connected');
     }
   });
 
   useEffect(() => {
-    if (lastMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastMessage));
+    if (lastJsonMessage !== null) {
+      if (lastJsonMessage.type == 'message') {
+        setMessageHistory((prev) => prev.concat(lastJsonMessage.message)); 
+      } else if (lastJsonMessage.type == 'user-info') {
+        setUsername(lastJsonMessage.username);
+        setProfilePic(lastJsonMessage.profile_pic);
+      }
     }
-  }, [lastMessage, setMessageHistory]);
+  }, [lastJsonMessage]);
 
-
+  // dont send empty messages, after sending clear current
   const handleSend = () => {
-    sendMessage(currentMessage);
-    setCurrentMessage('');
+    if (currentMessage !== '') {
+      sendMessage(currentMessage);
+      setCurrentMessage('');
+    }
   }
 
   const connectionStatus = {
@@ -48,7 +48,7 @@ function Dashboard() {
   return (
     <div className="Dashboard">
       <Header username={username} profilePic={profilePic} />
-      <p>{connectionStatus}</p>
+      <p>Connection Status:{connectionStatus}</p>
       <label>
         Message:
         <input type="text" value={currentMessage} onChange={message => { setCurrentMessage(message.target.value) }} />
@@ -56,7 +56,7 @@ function Dashboard() {
       <button onClick={handleSend}>Send</button>
       <ul>
         {messageHistory.map((message, idx) => (
-          <span key={idx}>{message ? message.data : null}</span>
+          <span key={idx}>{message ? message : null}</span>
         ))}
       </ul>
     </div>
