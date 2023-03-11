@@ -1,13 +1,15 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useCookies } from 'react-cookie';
 
 import Header from './Header';
+import WebPlayer from "./WebPlayer";
 import './Dashboard.css';
 const socketUrl = 'ws://localhost:8000/';
 
 function Dashboard() {
   const [cookies, setCookies] = useCookies(['user']);
+  const [spotifyToken, setSpotifyToken] = useState();
   const [username, setUsername] = useState();
   const [profilePic, setProfilePic] = useState();
   const [currentMessage, setCurrentMessage] = useState('');
@@ -24,11 +26,13 @@ function Dashboard() {
   // called when last json message changes, so anytime the backend sends a message.
   useEffect(() => {
     if (lastJsonMessage !== null) {
-      if (lastJsonMessage.type == 'message') { // if message type json, add to message history
+      if (lastJsonMessage.type === 'message') { // if message type json, add to message history
         setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
-      } else if (lastJsonMessage.type == 'user-info') { // if user info type, update state user info
+      } else if (lastJsonMessage.type === 'user-info') { // if user info type, update state user info
         setUsername(lastJsonMessage.username);
         setProfilePic(lastJsonMessage.profile_pic);
+      } else if (lastJsonMessage.type === 'spotify-token') {
+        setSpotifyToken(lastJsonMessage.token);
       }
     }
   }, [lastJsonMessage]);
@@ -36,7 +40,7 @@ function Dashboard() {
   // scroll to messages end whenever a new message is added
   useEffect(() => {
     messagesEnd.scrollIntoView({ behavior: "smooth" });
-  }, [messageHistory]);
+  }, [messageHistory, messagesEnd]); //messages end is only added to suppress eslint warning
 
   // prevents empty messages from being sent, after sending clear current message
   const handleSend = () => {
@@ -77,6 +81,7 @@ function Dashboard() {
         <button onClick={handleSend}>Send</button>
       </div>
       <div className="StatusBar">Connection Status: {connectionStatus}</div>
+      <WebPlayer token={spotifyToken} />
     </div>
   );
 }

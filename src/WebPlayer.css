@@ -1,0 +1,22 @@
+.WebPlayer {
+    height: 20vh;
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.AlbumArt {
+   height: 100%; 
+}
+
+.ControlButtons {
+    display: flex;
+    flex-direction: row;
+}
+
+.ControlButtonsLight {
+    display: flex;
+    flex-direction: row;
+    color: lightgray;
+}
