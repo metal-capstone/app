@@ -19,7 +19,6 @@ function WebPlayer({ token }) {
                 }
             };
             axios.get('https://api.spotify.com/v1/me/player', config).then(function (response) {
-                console.log(response.data);
                 setTrack(response.data.item.name);
                 setArtist(response.data.item.artists[0].name);
                 setAlbumArt(response.data.item.album.images[0].url);
