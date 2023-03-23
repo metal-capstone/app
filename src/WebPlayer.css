@@ -1,0 +1,25 @@
+.WebPlayer {
+    height: 20vh;
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.AlbumArt {
+   height: 100%;
+   margin-right: 10px;
+}
+
+.ControlButtons {
+    height: 30%;
+    display: flex;
+    flex-direction: row;
+}
+
+.ControlButtonsLight {
+    height: 30%;
+    display: flex;
+    flex-direction: row;
+    opacity: 0.3;
+}

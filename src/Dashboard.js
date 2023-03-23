@@ -1,42 +1,89 @@
 import React, { useEffect, useState } from "react";
-import axios from 'axios';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { useCookies } from 'react-cookie';
 
+import Header from './Header';
+import WebPlayer from "./WebPlayer";
 import './Dashboard.css';
+const socketUrl = 'ws://localhost:8000/';
 
 function Dashboard() {
-    const [username, setUsername] = useState("No username");
-    const [profilePic, setProfilePic] = useState("no url");
+  const [cookies, setCookies] = useCookies(['user']);
+  const [spotifyToken, setSpotifyToken] = useState();
+  const [username, setUsername] = useState();
+  const [profilePic, setProfilePic] = useState();
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [messageHistory, setMessageHistory] = useState([['App', 'Started']]);
+  let messagesEnd;
+  const userUrl = socketUrl + cookies.state + '/ws';
 
-    // Get user info when rendered
-    useEffect(() => {
-        axios.get('http://localhost:8000/user-info')
-        .then(function (response) {
-          setUsername(response.data.username);
-          setProfilePic(response.data.profile_pic);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-    }, []);
+  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(userUrl, {
+    onOpen: () => {
+      setMessageHistory((prev) => [...prev, ['App', 'Connected to ' + socketUrl]]);
+    }
+  });
 
-    // this is just an example function with a button to show how to query the backend
-    const logTopSongs = () => {
-        axios.get('http://localhost:8000/user-top-songs')
-          .then(function (response) {
-            console.log(response.data.songs)
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
+  // called when last json message changes, so anytime the backend sends a message.
+  useEffect(() => {
+    if (lastJsonMessage !== null) {
+      if (lastJsonMessage.type === 'message') { // if message type json, add to message history
+        setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
+      } else if (lastJsonMessage.type === 'user-info') { // if user info type, update state user info
+        setUsername(lastJsonMessage.username);
+        setProfilePic(lastJsonMessage.profile_pic);
+      } else if (lastJsonMessage.type === 'spotify-token') {
+        setSpotifyToken(lastJsonMessage.token);
       }
-  
-    return (
-      <div className="Dashboard">
-        <h1>{username}</h1>
-        <img src={profilePic} alt="profile" />
-        <button onClick={logTopSongs}>Log top songs</button>
-      </div>
-    );
+    }
+  }, [lastJsonMessage]);
+
+  // scroll to messages end whenever a new message is added
+  useEffect(() => {
+    messagesEnd.scrollIntoView({ behavior: "smooth" });
+  }, [messageHistory, messagesEnd]); //messages end is only added to suppress eslint warning
+
+  // prevents empty messages from being sent, after sending clear current message
+  const handleSend = () => {
+    if (currentMessage !== '') {
+      sendMessage(currentMessage);
+      setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
+      setCurrentMessage('');
+    }
   }
-  
-  export default Dashboard;
+
+  // strings for ready state statuses
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: 'Connecting',
+    [ReadyState.OPEN]: 'Connected (Open)',
+    [ReadyState.CLOSING]: 'Closing',
+    [ReadyState.CLOSED]: 'Closed',
+    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+  }[readyState];
+
+  // function to send message when enter is pressed when focused on the input box
+  const enterPress = (event) => {
+    if (event.keyCode === 13) {
+      handleSend();
+    }
+  }
+
+  return (
+    <div className="Dashboard">
+      <Header username={username} profilePic={profilePic} />
+      <div className="MessageHistory">
+        {messageHistory.map((message, idx) => (
+          <div className="Message" key={idx}><div className="MessageUser">{message[0]}</div><div className="MessageText">{message[1] ? message[1] : null}</div></div>
+        ))}
+        <div ref={(el) => { messagesEnd = el; }}></div>
+      </div>
+      <div className="MessageBox">
+        <div className="MessageLabel">Message:</div><input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
+        <button onClick={handleSend}>Send</button>
+      </div>
+      <div className="StatusBar">Connection Status: {connectionStatus}</div>
+      <WebPlayer token={spotifyToken} />
+    </div>
+  );
+}
+
+export default Dashboard;
