@@ -1,33 +1,28 @@
-import React from "react";
-import axios from 'axios';
-import { useCookies } from 'react-cookie';
-
-import Header from "./Header";
+import React, { useEffect, useState } from "react";
+import { Link, useOutletContext } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 import './Login.css';
 
-function Login() {
-  const [cookie, setCookies] = useCookies(['user']);
+function Login(props) {
+  const loggedIn = useOutletContext();
+  const [searchParams] = useSearchParams();
+  const [error, setError] = useState('');
 
-    // button function that gets the auth url from backend and redirect to it
-    const spotifyLogin = () => {
-      axios.get('http://localhost:8000/spotify-login')
-        .then(function (response) {
-          setCookies('state', response.data.state);
-          window.location.href = response.data.auth_url;
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
+  useEffect(() => {
+    let errorCode = searchParams.get('error');
+    if (errorCode !== null) {
+      setError('Error: (' + errorCode + ') Please try to login again.');
     }
-  
-    return (
-      <div className="Login">
-        <Header />
-        <p>A chatbot that can predict what songs the user wants to listen to based on their location as well as both explicit input + analysis of users mood</p>
-        <button onClick={spotifyLogin}>Login with Spotify</button>
-      </div>
-    );
-  }
-  
-  export default Login;
+  }, [searchParams]);
+
+  return (
+    <div className="Login">
+      <p>A chatbot that can predict what songs the user wants to listen to based on their location as well as both explicit input + analysis of users mood</p>
+      <p className="ErrorText">{error}</p>
+      { loggedIn ? <Link to="/dashboard"><button>Go to Dashboard</button></Link> : <button onClick={props.spotifyLogin}>Login with Spotify</button>}
+    </div>
+  );
+}
+
+export default Login;

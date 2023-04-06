@@ -1,4 +1,7 @@
 .Login {
-    text-align: center;
-  }
-  
+  text-align: center;
+}
+
+.ErrorText {
+  color: red;
+}
