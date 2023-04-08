@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 import './WebPlayer.css';
@@ -15,24 +15,18 @@ function WebPlayer({ token }) {
     const [currentTrackLength, setTrackLength] = useState(0);
     const [currentTrackProgress, setTrackProgress] = useState(0);
 
-    // Whenever token is changed, create an interval to update the playback every second
-    useEffect(() => {
-        const interval = setInterval(() => { updatePlayback(); }, 1000);
-        return () => clearInterval(interval);
-    }, [token]);
-
     // Function to generate user header for various spotify requests
-    const getUserHeader = () => {
+    const getUserHeader = useCallback(() => {
         return {
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             }
         };
-    }
+    }, [token]);
 
     // Function that will updated the playback info in the component, requests spotify and sets active status.
-    const updatePlayback = () => {
+    const updatePlayback = useCallback(() => {
         if (token !== undefined) { // Only request if there is a token
             const config = getUserHeader();
             axios.get('https://api.spotify.com/v1/me/player/currently-playing', config).then(function (response) {
@@ -55,7 +49,13 @@ function WebPlayer({ token }) {
         } else {
             setActive(false);
         }
-    };
+    }, [token, getUserHeader]);
+
+    // Whenever token is changed, create an interval to update the playback every second
+    useEffect(() => {
+        const interval = setInterval(() => { updatePlayback(); }, 1000);
+        return () => clearInterval(interval);
+    }, [token, updatePlayback]);
 
     // button function to play or pause the current song
     const playPauseSong = () => {

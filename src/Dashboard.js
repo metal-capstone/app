@@ -34,7 +34,7 @@ function Dashboard(props) {
     [ReadyState.CLOSING]: 'Closing',
     [ReadyState.CLOSED]: 'Closed',
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  } [props.readyState];
+  }[props.readyState];
 
   // function to send message when enter is pressed when focused on the input box
   const enterPress = (event) => {

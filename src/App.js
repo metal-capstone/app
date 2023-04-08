@@ -19,14 +19,8 @@ function App() {
   const [spotifyToken, setSpotifyToken] = useState();
   const [messageHistory, setMessageHistory] = useState([['App', 'Started']]);
 
-  // Check session every second after start
-  useEffect(() => {
-    const interval = setInterval(() => { checkSession(interval); }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Function that checks if user has a valid session, passed interval of self to clear after session is not found
-  const checkSession = async (interval) => {
+  const checkSession = useCallback((interval) => {
     if (cookies.state !== undefined) { // Only check session if user has one
       axios.get('http://localhost:8000/' + cookies.state + '/session-valid')
         .then(function () { // If the response is valid, session is valid
@@ -41,7 +35,13 @@ function App() {
           console.error(error);
         });
     }
-  }
+  }, [cookies.state]);
+
+  // Check session every second after start
+  useEffect(() => {
+    const interval = setInterval(() => { checkSession(interval); }, 1000);
+    return () => clearInterval(interval);
+  }, [checkSession]);
 
   // Function that returns a promise string of the websocket url, needed so that websocket doesn't connected until user is loggedIn
   const getSocketUrl = useCallback(() => {
@@ -53,7 +53,7 @@ function App() {
         setTimeout(waitForLogin, 1000);
       })();
     });
-  }, [loggedIn]);
+  }, [loggedIn, cookies.state]);
 
   // Connect to websocket, add connection message on open
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(getSocketUrl, {
