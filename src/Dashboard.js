@@ -5,8 +5,11 @@ import { useOutletContext } from "react-router-dom";
 import WebPlayer from "./WebPlayer";
 import './Dashboard.css';
 
+// Dashboard page that displays chatbot chat and web player.
+// Props are provided from app, given readyState and messageHistory to display messages and connection info,
+// given sendMessage to send users current message, and given spotify token for the web player.
 function Dashboard(props) {
-  let messagesEnd;
+  let messagesEnd; // variable for end of messages displayed in message history
   const loggedIn = useOutletContext(); // Get loggedIn from layout
   const [currentMessage, setCurrentMessage] = useState('');
 
@@ -42,15 +45,20 @@ function Dashboard(props) {
 
   return (
     <div className="Dashboard">
+      {/* Overlay div if user is not logged in */}
       {!loggedIn && <div className="Overlay">Not Logged In</div>}
       <div className="MessageHistory">
+        {/* render all messages in message history */}
         {props.messageHistory.map((message, idx) => (
           <div className="Message" key={idx}><div className="MessageUser">{message[0]}</div><div className="MessageText">{message[1] ? message[1] : null}</div></div>
         ))}
+        {/* Set div at end of message to messages end */}
         <div ref={(el) => { messagesEnd = el; }}></div>
       </div>
       <div className="MessageBox">
-        <div className="MessageLabel">Message:</div><input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
+        <div className="MessageLabel">Message:</div>
+        {/* message input box, check for keydown enter and set current message on change */}
+        <input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
         <button onClick={handleSend}>Send</button>
       </div>
       <div className="StatusBar">Connection Status: {connectionStatus}</div>
