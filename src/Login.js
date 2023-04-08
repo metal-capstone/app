@@ -4,11 +4,13 @@ import { useSearchParams } from "react-router-dom";
 
 import './Login.css';
 
+// Login page that has info on the project and a link to dashboard or to login.
 function Login(props) {
-  const loggedIn = useOutletContext();
+  const loggedIn = useOutletContext(); // Get loggedIn from layout
   const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
 
+  // Checks and sets if there is an error in the params
   useEffect(() => {
     let errorCode = searchParams.get('error');
     if (errorCode !== null) {

@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { ReadyState } from 'react-use-websocket';
+import { useOutletContext } from "react-router-dom";
 
 import WebPlayer from "./WebPlayer";
 import './Dashboard.css';
 
 function Dashboard(props) {
   let messagesEnd;
+  const loggedIn = useOutletContext(); // Get loggedIn from layout
   const [currentMessage, setCurrentMessage] = useState('');
 
   // scroll to messages end whenever a new message is added
   useEffect(() => {
     messagesEnd.scrollIntoView({ behavior: "smooth" });
-  }, [props.messageHistory, messagesEnd]); //messages end is only added to suppress eslint warning
+  }, [props.messageHistory, messagesEnd]); // messages end is only added to suppress eslint warning
 
   // prevents empty messages from being sent, after sending clear current message
   const handleSend = () => {
@@ -40,6 +42,7 @@ function Dashboard(props) {
 
   return (
     <div className="Dashboard">
+      {!loggedIn && <div className="Overlay">Not Logged In</div>}
       <div className="MessageHistory">
         {props.messageHistory.map((message, idx) => (
           <div className="Message" key={idx}><div className="MessageUser">{message[0]}</div><div className="MessageText">{message[1] ? message[1] : null}</div></div>
