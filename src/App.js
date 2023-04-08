@@ -70,9 +70,11 @@ function App() {
         setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
       } else if (lastJsonMessage.type === 'user-info') {
         setUsername(lastJsonMessage.username);
-        setProfilePic(lastJsonMessage.profile_pic);
+        if ('profile_pic' in lastJsonMessage) setProfilePic(lastJsonMessage.profile_pic);
       } else if (lastJsonMessage.type === 'spotify-token') {
         setSpotifyToken(lastJsonMessage.token);
+      } else if (lastJsonMessage.type === 'error') {
+        console.log(lastJsonMessage.error)
       }
     }
   }, [lastJsonMessage]);
