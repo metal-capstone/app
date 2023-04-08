@@ -102,7 +102,7 @@ function WebPlayer({ token }) {
                 <div>{currentTrack || 'No Song Playing'}</div>
                 <div>{currentArtist || 'No Artist'}</div>
                 <div>{msToMinSec(currentTrackProgress)}/{msToMinSec(currentTrackLength)}</div>
-                {/* If not active grey out buttons and let user know, display pause or play when relevant */}
+                {/* If not active grey out buttons and show not active message, display pause or play when relevant */}
                 <div className={`${isActive ? 'ControlButtons' : 'ControlButtonsLight'}`}>
                     <img src='/previous-button.svg' alt='Previous Song' onClick={previousSong}></img>
                     <img src={`${isPlaying ? '/pause-button.svg' : '/play-button.svg'}`} alt='Play or Pause' onClick={playPauseSong}></img>

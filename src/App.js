@@ -77,10 +77,12 @@ function App() {
           setSpotifyToken(lastJsonMessage.token);
           break;
         case 'error': // Error from backend
+          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.error]]);
           console.error(lastJsonMessage.error);
           break;
         default:
-          console.error('Unsupported message type');
+          setMessageHistory((prev) => [...prev, ['App', 'Error: Unsupported message type']]);
+          console.error('Error: Unsupported message type');
       }
     }
   }, [lastJsonMessage]);
