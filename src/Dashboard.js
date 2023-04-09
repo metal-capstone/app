@@ -7,7 +7,7 @@ import './Dashboard.css';
 
 // Dashboard page that displays chatbot chat and web player.
 // Props are provided from app, given readyState and messageHistory to display messages and connection info,
-// given sendMessage to send users current message, and given spotify token for the web player.
+// given sendJsonMessage to send users current message, and given spotify token for the web player.
 function Dashboard(props) {
   let messagesEnd; // variable for end of messages displayed in message history
   const loggedIn = useOutletContext(); // Get loggedIn from layout
@@ -21,7 +21,12 @@ function Dashboard(props) {
   // prevents empty messages from being sent, after sending clear current message
   const handleSend = () => {
     if (currentMessage !== '') {
-      props.sendMessage(currentMessage);
+      if (currentMessage.startsWith('!')) {
+        const words = currentMessage.split(' ')
+        props.sendJsonMessage({'type': words[0], 'message': words.slice(1)});
+      } else {
+        props.sendJsonMessage({'type': 'message', 'message': currentMessage});
+      }
       props.setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
       setCurrentMessage('');
     }
