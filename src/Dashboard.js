@@ -18,15 +18,20 @@ function Dashboard(props) {
     messagesEnd.scrollIntoView({ behavior: "smooth" });
   }, [props.messageHistory, messagesEnd]); // messages end is only added to suppress eslint warning
 
-  // prevents empty messages from being sent, after sending clear current message
+  // sends chat messages to backend, handles commands and message history updates
   const handleSend = () => {
     if (currentMessage !== '') {
+      let message; // final message to be sent
+      // messages that start with ! will be treated as commands, anything else is a regular message
       if (currentMessage.startsWith('!')) {
         const words = currentMessage.split(' ')
-        props.sendJsonMessage({'type': words[0], 'message': words.slice(1)});
+        // first word is the type ex !session, rest of message are params
+        message = {'type': words[0], 'message': words.slice(1)};
       } else {
-        props.sendJsonMessage({'type': 'message', 'message': currentMessage});
+        message = {'type': 'message', 'message': currentMessage};
       }
+      props.sendJsonMessage(message);
+      // add to message history and clear current message
       props.setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
       setCurrentMessage('');
     }
