@@ -1,52 +1,28 @@
 import React, { useEffect, useState } from "react";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { useCookies } from 'react-cookie';
+import { ReadyState } from 'react-use-websocket';
+import { useOutletContext } from "react-router-dom";
 
-import Header from './Header';
 import WebPlayer from "./WebPlayer";
 import './Dashboard.css';
-const socketUrl = 'ws://localhost:8000/';
 
-function Dashboard() {
-  const [cookies, setCookies] = useCookies(['user']);
-  const [spotifyToken, setSpotifyToken] = useState();
-  const [username, setUsername] = useState();
-  const [profilePic, setProfilePic] = useState();
+// Dashboard page that displays chatbot chat and web player.
+// Props are provided from app, given readyState and messageHistory to display messages and connection info,
+// given sendMessage to send users current message, and given spotify token for the web player.
+function Dashboard(props) {
+  let messagesEnd; // variable for end of messages displayed in message history
+  const loggedIn = useOutletContext(); // Get loggedIn from layout
   const [currentMessage, setCurrentMessage] = useState('');
-  const [messageHistory, setMessageHistory] = useState([['App', 'Started']]);
-  let messagesEnd;
-  const userUrl = socketUrl + cookies.state + '/ws';
-
-  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(userUrl, {
-    onOpen: () => {
-      setMessageHistory((prev) => [...prev, ['App', 'Connected to ' + socketUrl]]);
-    }
-  });
-
-  // called when last json message changes, so anytime the backend sends a message.
-  useEffect(() => {
-    if (lastJsonMessage !== null) {
-      if (lastJsonMessage.type === 'message') { // if message type json, add to message history
-        setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
-      } else if (lastJsonMessage.type === 'user-info') { // if user info type, update state user info
-        setUsername(lastJsonMessage.username);
-        setProfilePic(lastJsonMessage.profile_pic);
-      } else if (lastJsonMessage.type === 'spotify-token') {
-        setSpotifyToken(lastJsonMessage.token);
-      }
-    }
-  }, [lastJsonMessage]);
 
   // scroll to messages end whenever a new message is added
   useEffect(() => {
     messagesEnd.scrollIntoView({ behavior: "smooth" });
-  }, [messageHistory, messagesEnd]); //messages end is only added to suppress eslint warning
+  }, [props.messageHistory, messagesEnd]); // messages end is only added to suppress eslint warning
 
   // prevents empty messages from being sent, after sending clear current message
   const handleSend = () => {
     if (currentMessage !== '') {
-      sendMessage(currentMessage);
-      setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
+      props.sendMessage(currentMessage);
+      props.setMessageHistory((prev) => [...prev, ['User', currentMessage]]);
       setCurrentMessage('');
     }
   }
@@ -58,7 +34,7 @@ function Dashboard() {
     [ReadyState.CLOSING]: 'Closing',
     [ReadyState.CLOSED]: 'Closed',
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
+  }[props.readyState];
 
   // function to send message when enter is pressed when focused on the input box
   const enterPress = (event) => {
@@ -69,19 +45,24 @@ function Dashboard() {
 
   return (
     <div className="Dashboard">
-      <Header username={username} profilePic={profilePic} />
+      {/* Overlay div if user is not logged in */}
+      {!loggedIn && <div className="Overlay">Not Logged In</div>}
       <div className="MessageHistory">
-        {messageHistory.map((message, idx) => (
+        {/* render all messages in message history */}
+        {props.messageHistory.map((message, idx) => (
           <div className="Message" key={idx}><div className="MessageUser">{message[0]}</div><div className="MessageText">{message[1] ? message[1] : null}</div></div>
         ))}
+        {/* Set div at end of message to messages end */}
         <div ref={(el) => { messagesEnd = el; }}></div>
       </div>
       <div className="MessageBox">
-        <div className="MessageLabel">Message:</div><input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
+        <div className="MessageLabel">Message:</div>
+        {/* message input box, check for keydown enter and set current message on change */}
+        <input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
         <button onClick={handleSend}>Send</button>
       </div>
       <div className="StatusBar">Connection Status: {connectionStatus}</div>
-      <WebPlayer token={spotifyToken} />
+      <WebPlayer token={props.spotifyToken} />
     </div>
   );
 }

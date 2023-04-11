@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -8,6 +7,7 @@ import reportWebVitals from './reportWebVitals';
 
 const root = createRoot(document.getElementById("root"));
 
+// Index for application to start at, makes a browser router for navigation and then puts the rest of the app inside
 root.render(
   <BrowserRouter>
     <App/>
