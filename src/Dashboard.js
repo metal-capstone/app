@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import { ReadyState } from 'react-use-websocket';
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext } from 'react-router-dom';
 
-import WebPlayer from "./WebPlayer";
+import WebPlayer from './WebPlayer';
 import './Dashboard.css';
+import types from './types';
 
 // Dashboard page that displays chatbot chat and web player.
 // Props are provided from app, given readyState and messageHistory to display messages and connection info,
@@ -15,7 +16,7 @@ function Dashboard(props) {
 
   // scroll to messages end whenever a new message is added
   useEffect(() => {
-    messagesEnd.scrollIntoView({ behavior: "smooth" });
+    messagesEnd.scrollIntoView({ behavior: 'smooth' });
   }, [props.messageHistory, messagesEnd]); // messages end is only added to suppress eslint warning
 
   // sends chat messages to backend, handles commands and message history updates
@@ -26,9 +27,9 @@ function Dashboard(props) {
       if (currentMessage.startsWith('!')) {
         const words = currentMessage.split(' ')
         // first word is the type ex !session, rest of message are params
-        message = {'type': words[0], 'message': words.slice(1)};
+        message = {'type': types.COMMAND, 'detail': {'command': words[0], 'params': words.slice(1)}};
       } else {
-        message = {'type': 'message', 'message': currentMessage};
+        message = {'type': types.MESSAGE, 'detail': currentMessage};
       }
       props.sendJsonMessage(message);
       // add to message history and clear current message
@@ -54,24 +55,24 @@ function Dashboard(props) {
   }
 
   return (
-    <div className="Dashboard">
+    <div className='Dashboard'>
       {/* Overlay div if user is not logged in */}
-      {!loggedIn && <div className="Overlay">Not Logged In</div>}
-      <div className="MessageHistory">
+      {!loggedIn && <div className='Overlay'>Not Logged In</div>}
+      <div className='MessageHistory'>
         {/* render all messages in message history */}
         {props.messageHistory.map((message, idx) => (
-          <div className="Message" key={idx}><div className="MessageUser">{message[0]}</div><div className="MessageText">{message[1] ? message[1] : null}</div></div>
+          <div className='Message' key={idx}><div className='MessageUser'>{message[0]}</div><div className='MessageText'>{message[1] ? message[1] : null}</div></div>
         ))}
         {/* Set div at end of message to messages end */}
         <div ref={(el) => { messagesEnd = el; }}></div>
       </div>
-      <div className="MessageBox">
-        <div className="MessageLabel">Message:</div>
+      <div className='MessageBox'>
+        <div className='MessageLabel'>Message:</div>
         {/* message input box, check for keydown enter and set current message on change */}
-        <input type="text" value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
+        <input type='text' value={currentMessage} onKeyDown={(e) => enterPress(e)} onChange={message => { setCurrentMessage(message.target.value) }} />
         <button onClick={handleSend}>Send</button>
       </div>
-      <div className="StatusBar">Connection Status: {connectionStatus}</div>
+      <div className='StatusBar'>Connection Status: {connectionStatus}</div>
       <WebPlayer token={props.spotifyToken} />
     </div>
   );

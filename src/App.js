@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import useWebSocket from 'react-use-websocket';
 
 import './App.css';
-import Layout from "./Layout"
-import Login from "./Login";
-import Dashboard from "./Dashboard";
+import Layout from './Layout';
+import Login from './Login';
+import Dashboard from './Dashboard';
+import types from './types';
 
 const socketUrl = 'ws://localhost:8000/ws';
 const loginUrl = 'http://localhost:8000/spotify-login';
@@ -37,40 +38,42 @@ function App() {
     if (lastJsonMessage !== null) {
       switch (lastJsonMessage.type) {
         // Messages are added to message history
-        case 'message':
-          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
+        case types.MESSAGE:
+          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.detail]]);
           break;
 
         // store log status for graceful open and close
-        case 'log-status':
-          if (lastJsonMessage.loggedIn) {
-            // websocket connection success
-            setLoggedIn(true);
-          } else {
-            // requested log out, set default states
-            logoutState();
+        case types.DATA:
+          const data = lastJsonMessage.detail
+          if ('logStatus' in data) {
+            if (data.logStatus) {
+              // websocket connection success
+              setLoggedIn(true);
+            } else {
+              // requested log out, set default states
+              logoutState();
+            }
           }
+          if ('token' in data) setSpotifyToken(data.token);
+          if ('username' in data) setUsername(data.username);
+          if ('profilePic' in data) setProfilePic(data.profilePic);
           break;
 
-        case 'user-info':
-          setUsername(lastJsonMessage.username);
-          if ('profile_pic' in lastJsonMessage) setProfilePic(lastJsonMessage.profile_pic); // only set profile pic if it exists
-          break;
-
-        case 'spotify-token':
-          setSpotifyToken(lastJsonMessage.token);
+        case types.INFO:
+          setMessageHistory((prev) => [...prev, ['Server:Info', lastJsonMessage.detail]]);
+          console.log(lastJsonMessage.detail);
           break;
 
         // Error on backend side
-        case 'error':
-          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.error]]);
-          console.error(lastJsonMessage.error);
+        case types.ERROR:
+          setMessageHistory((prev) => [...prev, ['Server:Error', lastJsonMessage.detail]]);
+          console.error(lastJsonMessage.detail);
           break;
 
         // Error on frontend side
         default:
-          setMessageHistory((prev) => [...prev, ['App', 'Error: Unsupported message type (' + lastJsonMessage.type + ')']]);
-          console.error('Error: Unsupported message type (' + lastJsonMessage.type + ')');
+          setMessageHistory((prev) => [...prev, ['App:Error', 'Unsupported message type (' + lastJsonMessage.type + ')']]);
+          console.error('Unsupported message type (' + lastJsonMessage.type + ')');
       }
     }
   }, [lastJsonMessage]);
@@ -82,7 +85,7 @@ function App() {
 
   // button function that sends a log out request to backend
   const logoutRequest = () => {
-    sendJsonMessage({ 'type': 'logout' });
+    sendJsonMessage({ 'type': types.COMMAND, 'detail': {'command': 'logout'} });
   }
 
   const logoutState = () => {
@@ -94,9 +97,9 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Layout username={username} profilePic={profilePic} spotifyLogin={spotifyLogin} logout={logoutRequest} loggedIn={loggedIn} />}>
+      <Route path='/' element={<Layout username={username} profilePic={profilePic} spotifyLogin={spotifyLogin} logout={logoutRequest} loggedIn={loggedIn} />}>
         <Route index element={<Login spotifyLogin={spotifyLogin} />} />
-        <Route path="dashboard" element={<Dashboard sendJsonMessage={sendJsonMessage} readyState={readyState} messageHistory={messageHistory} setMessageHistory={setMessageHistory} spotifyToken={spotifyToken} />} />
+        <Route path='dashboard' element={<Dashboard sendJsonMessage={sendJsonMessage} readyState={readyState} messageHistory={messageHistory} setMessageHistory={setMessageHistory} spotifyToken={spotifyToken} />} />
       </Route>
     </Routes>
   );
