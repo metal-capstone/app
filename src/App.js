@@ -1,124 +1,105 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Route, Routes } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import useWebSocket from 'react-use-websocket';
-import { useCookies } from 'react-cookie';
-import axios from 'axios';
 
 import './App.css';
-import Layout from "./Layout"
-import Login from "./Login";
-import Dashboard from "./Dashboard";
+import Layout from './Layout';
+import Login from './Login';
+import Dashboard from './Dashboard';
+import types from './types';
 
-const socketUrl = 'ws://localhost:8000/';
+const socketUrl = 'ws://localhost:8000/ws';
+const loginUrl = 'http://localhost:8000/spotify-login';
 
+// Main app component, handles websocket, log in, routes, and data management
 function App() {
-  const [cookies, setCookies] = useCookies(['user']);
   const [username, setUsername] = useState();
   const [profilePic, setProfilePic] = useState();
   const [loggedIn, setLoggedIn] = useState(false);
   const [spotifyToken, setSpotifyToken] = useState();
   const [messageHistory, setMessageHistory] = useState([['App', 'Started']]);
 
-  // Function that checks if user has a valid session, passed interval of self to clear after session is not found
-  const checkSession = useCallback((interval) => {
-    if (cookies.state !== undefined) { // Only check session if user has one
-      axios.get('http://localhost:8000/' + cookies.state + '/session-valid')
-        .then(function () { // If the response is valid, session is valid
-          setLoggedIn(true);
-        })
-        .catch(function (error) { // catch 404 session not found, log out user and reset state and stop checking
-          setUsername();
-          setProfilePic();
-          setSpotifyToken();
-          clearInterval(interval);
-          setLoggedIn(false);
-          console.error(error);
-        });
-    }
-  }, [cookies.state]);
-
-  // Check session every second after start
-  useEffect(() => {
-    const interval = setInterval(() => { checkSession(interval); }, 1000);
-    return () => clearInterval(interval);
-  }, [checkSession]);
-
-  // Function that returns a promise string of the websocket url, needed so that websocket doesn't connected until user is loggedIn
-  const getSocketUrl = useCallback(() => {
-    return new Promise((resolve) => {
-      (function waitForLogin() { // check if logged in every second, resolve promise once logged in
-        if (loggedIn) {
-          resolve(socketUrl + cookies.state + '/ws');
-        }
-        setTimeout(waitForLogin, 1000);
-      })();
-    });
-  }, [loggedIn, cookies.state]);
-
   // Connect to websocket, add connection message on open
-  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(getSocketUrl, {
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
       setMessageHistory((prev) => [...prev, ['App', 'Connected to ' + socketUrl]]);
     },
+    shouldReconnect: () => {
+      return loggedIn // only reconnected if you were logged in last, server disconnection
+    },
+    onReconnectStop: () => {
+      // forced log out, cant reach server, set default states
+      logoutState();
+    }
   });
 
-  // Message Handler for websocket, called anytime last json message changes
+  // Message Handler for incoming websocket messages, called anytime last json message changes
   useEffect(() => {
     if (lastJsonMessage !== null) {
       switch (lastJsonMessage.type) {
-        case 'message': // Messages are added to message history
-          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.message]]);
+        // Messages are added to message history
+        case types.MESSAGE:
+          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.detail]]);
           break;
-        case 'user-info':
-          setUsername(lastJsonMessage.username);
-          if ('profile_pic' in lastJsonMessage) setProfilePic(lastJsonMessage.profile_pic); // only set profile pic if it exists
+
+        // store log status for graceful open and close
+        case types.DATA:
+          const data = lastJsonMessage.detail
+          if ('logStatus' in data) {
+            if (data.logStatus) {
+              // websocket connection success
+              setLoggedIn(true);
+            } else {
+              // requested log out, set default states
+              logoutState();
+            }
+          }
+          if ('token' in data) setSpotifyToken(data.token);
+          if ('username' in data) setUsername(data.username);
+          if ('profilePic' in data) setProfilePic(data.profilePic);
           break;
-        case 'spotify-token':
-          setSpotifyToken(lastJsonMessage.token);
+
+        case types.INFO:
+          setMessageHistory((prev) => [...prev, ['Server:Info', lastJsonMessage.detail]]);
+          console.log(lastJsonMessage.detail);
           break;
-        case 'error': // Error from backend
-          setMessageHistory((prev) => [...prev, ['Server', lastJsonMessage.error]]);
-          console.error(lastJsonMessage.error);
+
+        // Error on backend side
+        case types.ERROR:
+          setMessageHistory((prev) => [...prev, ['Server:Error', lastJsonMessage.detail]]);
+          console.error(lastJsonMessage.detail);
           break;
+
+        // Error on frontend side
         default:
-          setMessageHistory((prev) => [...prev, ['App', 'Error: Unsupported message type']]);
-          console.error('Error: Unsupported message type');
+          setMessageHistory((prev) => [...prev, ['App:Error', 'Unsupported message type (' + lastJsonMessage.type + ')']]);
+          console.error('Unsupported message type (' + lastJsonMessage.type + ')');
       }
     }
   }, [lastJsonMessage]);
 
-  // button function that logs the user in with spotify. stores the state, gets the auth url from backend, and redirects to it
+  // button function that logs the user in with spotify, redirects to backend and then to spotify
   const spotifyLogin = () => {
-    axios.get('http://localhost:8000/spotify-login')
-      .then(function (response) {
-        setCookies('state', response.data.state);
-        window.location.href = response.data.auth_url;
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
+    window.location.href = loginUrl;
   }
 
-  // button function that logs the user out, clears state cookies and resets state
-  const logout = () => {
-    axios.post('http://localhost:8000/' + cookies.state + '/session-logout')
-      .then(function () {
-        setCookies('state', undefined);
-        setUsername();
-        setProfilePic();
-        setSpotifyToken();
-        setLoggedIn(false);
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
+  // button function that sends a log out request to backend
+  const logoutRequest = () => {
+    sendJsonMessage({ 'type': types.COMMAND, 'detail': {'command': 'logout'} });
+  }
+
+  const logoutState = () => {
+    setUsername();
+    setProfilePic();
+    setSpotifyToken();
+    setLoggedIn(false);
   }
 
   return (
     <Routes>
-      <Route path="/" element={<Layout username={username} profilePic={profilePic} spotifyLogin={spotifyLogin} logout={logout} loggedIn={loggedIn} />}>
+      <Route path='/' element={<Layout username={username} profilePic={profilePic} spotifyLogin={spotifyLogin} logout={logoutRequest} loggedIn={loggedIn} />}>
         <Route index element={<Login spotifyLogin={spotifyLogin} />} />
-        <Route path="dashboard" element={<Dashboard sendMessage={sendMessage} readyState={readyState} messageHistory={messageHistory} setMessageHistory={setMessageHistory} spotifyToken={spotifyToken} />} />
+        <Route path='dashboard' element={<Dashboard sendJsonMessage={sendJsonMessage} readyState={readyState} messageHistory={messageHistory} setMessageHistory={setMessageHistory} spotifyToken={spotifyToken} />} />
       </Route>
     </Routes>
   );
