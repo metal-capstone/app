@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import useWebSocket from 'react-use-websocket';
+import { useGeolocated } from "react-geolocated";
 
 import './App.css';
 import Layout from './Layout';
@@ -33,6 +34,21 @@ function App() {
     }
   });
 
+  // Geo location setup
+  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
+    useGeolocated({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      userDecisionTimeout: 5000,
+    });
+
+  useEffect(() => {
+    if (isGeolocationAvailable && isGeolocationEnabled && coords) {
+      sendJsonMessage({ 'type': types.DATA, 'detail': { 'lat': coords.latitude, 'long': coords.longitude } });
+    }
+  }, [isGeolocationAvailable, isGeolocationEnabled, coords]);
+
   // Message Handler for incoming websocket messages, called anytime last json message changes
   useEffect(() => {
     if (lastJsonMessage !== null) {
@@ -60,19 +76,19 @@ function App() {
           break;
 
         case types.INFO:
-          setMessageHistory((prev) => [...prev, ['Server:Info', lastJsonMessage.detail]]);
+          setMessageHistory((prev) => [...prev, ['Server', 'Info: ' + lastJsonMessage.detail]]);
           console.log(lastJsonMessage.detail);
           break;
 
         // Error on backend side
         case types.ERROR:
-          setMessageHistory((prev) => [...prev, ['Server:Error', lastJsonMessage.detail]]);
+          setMessageHistory((prev) => [...prev, ['Server', 'Error: ' + lastJsonMessage.detail]]);
           console.error(lastJsonMessage.detail);
           break;
 
         // Error on frontend side
         default:
-          setMessageHistory((prev) => [...prev, ['App:Error', 'Unsupported message type (' + lastJsonMessage.type + ')']]);
+          setMessageHistory((prev) => [...prev, ['App', 'Error: Unsupported message type (' + lastJsonMessage.type + ')']]);
           console.error('Unsupported message type (' + lastJsonMessage.type + ')');
       }
     }
@@ -85,7 +101,7 @@ function App() {
 
   // button function that sends a log out request to backend
   const logoutRequest = () => {
-    sendJsonMessage({ 'type': types.COMMAND, 'detail': {'command': 'logout'} });
+    sendJsonMessage({ 'type': types.COMMAND, 'detail': { 'command': 'logout' } });
   }
 
   const logoutState = () => {
